@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santander — Banca en Línea</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red: #EC0000; --red-dark: #c40000;
+  --green: #00843D; --green-bg: #f0faf4;
+  --text: #1a1a1a; --text-2: #555; --text-3: #888; --text-4: #aaa;
+  --border: #e8e8e5; --bg: #f0f4f8; --white: #fff; --surface: #f7f7f5;
+}
+
+body { font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+
+/* ─── PAGES ───────────────────────────────────────────────── */
+.page { display: none; }
+.page.active { display: flex; flex-direction: column; min-height: 100vh; }
+#page-login.active { flex-direction: row; }
+
+/* ══════════════════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════════════════ */
+.login-left {
+  width: 45%; background: var(--red);
+  display: flex; flex-direction: column;
+  justify-content: space-between; padding: 52px;
+}
+.login-left-logo { color: #fff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.login-left-tagline { color: rgba(255,255,255,0.88); font-size: 34px; font-weight: 300; line-height: 1.3; max-width: 320px; }
+.login-left-footer { color: rgba(255,255,255,0.45); font-size: 12px; }
+
+.login-right {
+  flex: 1; background: var(--white);
+  display: flex; align-items: center; justify-content: center; padding: 48px;
+}
+.login-box { width: 100%; max-width: 380px; }
+.login-box h2 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+.login-box .subtitle { font-size: 14px; color: var(--text-3); margin-bottom: 36px; font-weight: 300; }
+
+.field { margin-bottom: 20px; }
+.field label { display: block; font-size: 13px; font-weight: 500; color: #444; margin-bottom: 8px; }
+.field input {
+  width: 100%; padding: 13px 16px;
+  border: 1.5px solid #e0e0e0; border-radius: 8px;
+  font-size: 15px; font-family: 'DM Sans', sans-serif;
+  color: var(--text); outline: none; transition: border-color 0.2s;
+}
+.field input:focus { border-color: var(--red); }
+.field input.err { border-color: var(--red); background: #fff5f5; }
+
+.error-msg { font-size: 12px; color: var(--red); margin-top: 6px; font-weight: 500; min-height: 18px; }
+
+.btn-primary {
+  width: 100%; padding: 14px;
+  background: var(--red); color: #fff; border: none; border-radius: 8px;
+  font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; margin-top: 8px; transition: background 0.2s, transform 0.1s;
+}
+.btn-primary:hover:not(:disabled) { background: var(--red-dark); }
+.btn-primary:active:not(:disabled) { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* spinner */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════════ */
+#page-dash { background: var(--bg); }
+
+.header { background: var(--red); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; position: sticky; top: 0; z-index: 100; flex-shrink: 0; }
+.header-logo { color: #fff; font-size: 20px; font-weight: 700; }
+.header-right { display: flex; align-items: center; gap: 20px; }
+.header-rut { color: rgba(255,255,255,0.8); font-size: 13px; }
+.btn-salir { background: none; border: 1px solid rgba(255,255,255,0.4); color: rgba(255,255,255,0.85); font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; padding: 6px 14px; border-radius: 6px; transition: all 0.2s; }
+.btn-salir:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+.tabs { background: var(--white); border-bottom: 1px solid var(--border); display: flex; padding: 0 48px; position: sticky; top: 56px; z-index: 99; flex-shrink: 0; }
+.tab { padding: 16px 24px; font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-3); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab.active { color: var(--red); border-bottom-color: var(--red); }
+
+.body { padding: 32px 48px 64px; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+/* selector créditos */
+.creditos-selector { display: flex; gap: 14px; margin-bottom: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.creditos-selector::-webkit-scrollbar { display: none; }
+.credito-card { background: var(--white); border: 2px solid var(--border); border-radius: 12px; padding: 16px 22px; min-width: 210px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.credito-card.selected { border-color: var(--red); background: #fff5f5; }
+.credito-card:hover:not(.selected) { border-color: #ccc; }
+.cc-tipo { font-size: 11px; color: var(--text-3); font-weight: 500; margin-bottom: 5px; }
+.cc-num { font-size: 16px; font-weight: 600; }
+.cc-icon { width: 38px; height: 38px; background: #fff0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+
+.dots { display: flex; gap: 6px; margin-bottom: 28px; padding-top: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; cursor: pointer; transition: background 0.2s; }
+.dot.active { background: var(--red); }
+
+/* tabla y secciones */
+.sec-label { font-size: 10px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--text-4); margin-bottom: 10px; }
+.monto-pendiente { font-size: 14px; color: var(--text-2); margin-bottom: 18px; }
+.monto-pendiente strong { font-size: 28px; color: var(--text); font-weight: 700; display: block; margin-top: 2px; }
+
+.tabla { background: var(--white); border-radius: 14px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 28px; }
+.tabla-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 24px; border-bottom: 1px solid #f4f4f2; font-size: 14px; }
+.tabla-row:last-child { border-bottom: none; }
+.tr-label { color: var(--text-2); }
+.tr-value { font-weight: 600; }
+
+.card-section { background: var(--white); border-radius: 16px; border: 1px solid var(--border); padding: 30px; margin-bottom: 24px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.section-head h3 { font-size: 19px; font-weight: 600; }
+.powered { font-size: 11px; color: var(--text-4); display: flex; align-items: center; gap: 6px; }
+.powered::before { content: ''; display: inline-block; width: 20px; height: 2px; background: var(--border); }
+
+/* valorización */
+.val-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: center; margin-bottom: 20px; }
+.val-card { background: var(--surface); border-radius: 12px; padding: 22px; text-align: center; }
+.val-label { font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-4); margin-bottom: 12px; }
+.val-uf { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+.val-fecha { font-size: 12px; color: var(--text-4); }
+.val-delta { text-align: center; padding: 12px; }
+.delta-num { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.delta-pct { font-size: 13px; font-weight: 600; }
+.pos { color: var(--green); } .neg { color: var(--red); }
+.mensaje { border-radius: 10px; padding: 14px 18px; font-size: 14px; color: var(--text-2); line-height: 1.6; border-left: 3px solid var(--border); background: var(--surface); }
+.mensaje.pos-bg { border-left-color: var(--green); background: var(--green-bg); color: #1a4d2e; }
+
+/* liquidez */
+.sim-monto { background: var(--surface); border-radius: 10px; padding: 16px 22px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.sim-monto-label { font-size: 13px; color: var(--text-2); line-height: 1.4; }
+.sim-monto-val { font-size: 22px; font-weight: 700; white-space: nowrap; }
+.sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.sim-card { border-radius: 12px; padding: 22px; border: 2px solid var(--border); }
+.sim-card.dest { border-color: var(--green); background: var(--green-bg); }
+.sim-card-tipo { font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-4); margin-bottom: 6px; }
+.sim-card.dest .sim-card-tipo { color: var(--green); }
+.sim-card-plazo { font-size: 12px; color: var(--text-4); margin-bottom: 18px; }
+.sim-card-cuota-label { font-size: 12px; color: var(--text-3); margin-bottom: 4px; }
+.sim-card-cuota { font-size: 28px; font-weight: 700; }
+.sim-card.dest .sim-card-cuota { color: var(--green); }
+.sim-card-pesos { font-size: 13px; color: var(--text-3); margin-top: 3px; }
+.sim-card.dest .sim-card-pesos { color: #2d7a4f; }
+.sim-card-nota { font-size: 12px; color: var(--text-4); margin-top: 10px; }
+.sim-ahorro { background: var(--green-bg); border: 1.5px solid var(--green); border-radius: 10px; padding: 16px 22px; display: flex; align-items: center; justify-content: space-between; }
+.sim-ahorro-label { font-size: 14px; color: var(--green); font-weight: 500; }
+.sim-ahorro-val { font-size: 20px; font-weight: 700; color: var(--green); text-align: right; }
+.sim-ahorro-pesos { font-size: 13px; color: #2d7a4f; font-weight: 500; }
+
+/* proyectos */
+.proy-header { margin-bottom: 20px; }
+.proy-header h3 { font-size: 19px; font-weight: 600; margin-bottom: 4px; }
+.proy-header p { font-size: 13px; color: var(--text-3); }
+.proy-item { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+.proy-trigger { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; background: var(--white); transition: background 0.15s; gap: 16px; }
+.proy-trigger:hover { background: #fafaf8; }
+.proy-trigger.open { background: var(--green-bg); border-bottom: 1px solid var(--border); }
+.proy-left { display: flex; align-items: center; gap: 14px; }
+.proy-thumb { width: 64px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--surface); }
+.proy-nombre { font-size: 15px; font-weight: 600; }
+.proy-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.proy-right { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+.proy-precio { font-size: 14px; font-weight: 600; text-align: right; }
+.proy-canon { font-size: 11px; color: var(--text-4); margin-top: 2px; }
+.proy-chevron { font-size: 14px; color: var(--text-4); transition: transform 0.25s, color 0.2s; }
+.proy-chevron.open { transform: rotate(180deg); color: var(--green); }
+.proy-body { padding: 22px; background: #fafaf8; display: grid; grid-template-columns: repeat(3,1fr) 1.4fr; gap: 12px; align-items: start; animation: slideDown 0.22s ease; }
+.proy-body-img { width: 100%; height: 170px; object-fit: cover; border-radius: 10px; grid-column: 1 / -1; display: block; }
+@keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.proy-stat { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.proy-stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-4); margin-bottom: 6px; }
+.proy-stat-val { font-size: 16px; font-weight: 700; }
+.proy-stat-sub { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+.flujo { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+.flujo-titulo { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-4); margin-bottom: 12px; }
+.flujo-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid #f4f4f2; align-items: center; }
+.flujo-row:last-child { border-bottom: none; font-weight: 700; font-size: 14px; margin-top: 4px; padding-top: 10px; }
+.f-pos { color: var(--green); font-weight: 600; }
+.f-neg { color: var(--red); font-weight: 600; }
+
+/* CTAs */
+.ctas-head { margin-bottom: 20px; }
+.ctas-head h3 { font-size: 19px; font-weight: 600; margin-bottom: 4px; }
+.ctas-head p { font-size: 13px; color: var(--text-3); }
+.ctas-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.cta-card { border: 2px solid var(--border); border-radius: 14px; padding: 26px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--white); display: flex; flex-direction: column; }
+.cta-card:hover { border-color: var(--red); background: #fff5f5; transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+.cta-icon { font-size: 34px; margin-bottom: 12px; }
+.cta-titulo { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.cta-desc { font-size: 12px; color: var(--text-3); line-height: 1.55; flex: 1; margin-bottom: 18px; }
+.cta-btn { width: 100%; padding: 11px; background: var(--red); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s; }
+.cta-btn:hover { background: var(--red-dark); }
+
+/* Toast */
+.toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 14px 28px; border-radius: 10px; font-size: 14px; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,0.25); z-index: 999; animation: fadeUp 0.3s ease forwards; white-space: nowrap; }
+@keyframes fadeUp { from { opacity:0; transform:translateX(-50%) translateY(12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-left { display: none; }
+  .login-right { padding: 32px 24px; }
+  .header, .tabs, .body { padding-left: 20px; padding-right: 20px; }
+  .val-grid { grid-template-columns: 1fr; } .val-delta { order: -1; }
+  .sim-grid { grid-template-columns: 1fr; }
+  .proy-body { grid-template-columns: 1fr 1fr; }
+  .ctas-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN PAGE ══════════════════════════════════════════ -->
+<div class="page active" id="page-login">
+  <div class="login-left">
+    <div class="login-left-logo">Santander</div>
+    <div class="login-left-tagline">Bienvenido a tu banco de siempre.</div>
+    <div class="login-left-footer">© 2026 Banco Santander Chile</div>
+  </div>
+  <div class="login-right">
+    <div class="login-box">
+      <h2>Ingresa a tu cuenta</h2>
+      <p class="subtitle">Accede con tu RUT y clave de internet</p>
+
+      <div class="field">
+        <label for="inp-rut">RUT</label>
+        <input id="inp-rut" type="text" placeholder="12345678-9" maxlength="12" autocomplete="off" autofocus>
+      </div>
+
+      <div class="field">
+        <label for="inp-clave">Clave de internet</label>
+        <input id="inp-clave" type="password" placeholder="••••••••">
+        <div class="error-msg" id="login-error"></div>
+      </div>
+
+      <button class="btn-primary" id="btn-ingresar" onclick="handleLogin()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD PAGE ══════════════════════════════════════ -->
+<div class="page" id="page-dash">
+  <header class="header">
+    <div class="header-logo">Santander</div>
+    <div class="header-right">
+      <span class="header-rut" id="dash-rut"></span>
+      <button class="btn-salir" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active">Mi Crédito</div>
+    <div class="tab">Cuotas a Pagar</div>
+    <div class="tab">Histórico de Pagos</div>
+  </div>
+
+  <div class="body">
+    <div class="creditos-selector">
+      <div class="credito-card selected" onclick="selectCredito(0)">
+        <div><div class="cc-tipo">Crédito Hipotecario</div><div class="cc-num">** 1283</div></div>
+        <div class="cc-icon">🏠</div>
+      </div>
+      <div class="credito-card" onclick="selectCredito(1)">
+        <div><div class="cc-tipo">Crédito Hipotecario</div><div class="cc-num">** 7407</div></div>
+        <div class="cc-icon">🏠</div>
+      </div>
+    </div>
+    <div class="dots">
+      <div class="dot active" onclick="selectCredito(0)"></div>
+      <div class="dot" onclick="selectCredito(1)"></div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────
+   CREDENTIALS
+───────────────────────────────────────────────────────── */
+const VALID_CREDS = { rut: '8711582-8', clave: 'Tinsa0987' }
+
+/* ─────────────────────────────────────────────────────────
+   RUT FORMATTER
+───────────────────────────────────────────────────────── */
+function formatRut(v) {
+  let c = v.replace(/[^0-9kK]/g, '')
+  if (c.length < 2) return c
+  return c.slice(0,-1) + '-' + c.slice(-1).toUpperCase()
+}
+
+const rutInput = document.getElementById('inp-rut')
+const claveInput = document.getElementById('inp-clave')
+const btnIngresar = document.getElementById('btn-ingresar')
+const loginError = document.getElementById('login-error')
+
+rutInput.addEventListener('input', e => {
+  const formatted = formatRut(e.target.value)
+  e.target.value = formatted
+  loginError.textContent = ''
+  rutInput.classList.remove('err')
+  claveInput.classList.remove('err')
+  updateBtn()
+})
+claveInput.addEventListener('input', () => { loginError.textContent = ''; updateBtn() })
+claveInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin() })
+rutInput.addEventListener('keydown', e => { if (e.key === 'Enter') claveInput.focus() })
+
+function updateBtn() {
+  btnIngresar.disabled = !rutInput.value || !claveInput.value
+}
+updateBtn()
+
+function handleLogin() {
+  const rut = rutInput.value.trim()
+  const clave = claveInput.value
+
+  if (!rut || !clave) return
+
+  // Simulate loading
+  btnIngresar.innerHTML = '<span class="spinner"></span>Verificando...'
+  btnIngresar.disabled = true
+
+  setTimeout(() => {
+    if (rut === VALID_CREDS.rut && clave === VALID_CREDS.clave) {
+      document.getElementById('dash-rut').textContent = rut
+      showPage('page-dash')
+      selectCredito(0)
+    } else {
+      loginError.textContent = 'RUT o clave incorrectos. Verifica tus datos.'
+      rutInput.classList.add('err')
+      claveInput.classList.add('err')
+      btnIngresar.innerHTML = 'Ingresar'
+      btnIngresar.disabled = false
+    }
+  }, 900)
+}
+
+function logout() {
+  rutInput.value = ''
+  claveInput.value = ''
+  loginError.textContent = ''
+  rutInput.classList.remove('err')
+  claveInput.classList.remove('err')
+  btnIngresar.innerHTML = 'Ingresar'
+  updateBtn()
+  showPage('page-login')
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+}
+
+/* ─────────────────────────────────────────────────────────
+   DASHBOARD DATA
+───────────────────────────────────────────────────────── */
+const CREDITOS = [
+  {
+    detalle: { pendiente:'UF 1.793,25', otorgado:'UF 3.700,50', dividendo:'UF 23,21', tasa:'4.4%', fecha:'2013-10-10' },
+    val: { orig:'UF 5.060,00', orig_fecha:'2013-10-10', delta_uf:'+414,00 UF', delta_pct:'+5,69%', pos:true, actual:'UF 5.348,00', actual_fecha:'2026-03-06' },
+    liq: { disponible:'UF 2.485,15', rehip_plazo:'20 años · tasa 4.4% anual', rehip_cuota:'UF 15,59', rehip_pesos:'$621.071', con_cuota:'UF 71,64', con_pesos:'$2.854.143', ahorro_uf:'+UF 56,05', ahorro_pesos:'$2.233.072' },
+    zona: 'Peñaflor',
+    proy: [
+      { img:'public/proyectos-inmobiliarios/apartment1.jpg', n:'Edificio Parque Central', t:'Departamento 2D/2B', m:65, precio:'UF 2.472,71', canon:'UF 45,33', pp:'$98.520.000', cp:'$1.806.000 / mes', g:'+UF 29,74 / $1.184.000', q:'UF 15,59' },
+      { img:'public/proyectos-inmobiliarios/apartment2.jpg', n:'Condominio Los Aromos', t:'Departamento 1D/1B', m:42, precio:'UF 3.112,04', canon:'UF 46,68', pp:'$124.000.000', cp:'$1.860.000 / mes', g:'+UF 31,09 / $1.238.000', q:'UF 15,59' },
+      { img:'public/proyectos-inmobiliarios/house1.jpg', n:'Casa Jardín Sur', t:'Casa 3D/2B', m:95, precio:'UF 3.987,10', canon:'UF 99,68', pp:'$158.830.000', cp:'$3.971.000 / mes', g:'+UF 84,09 / $3.351.000', q:'UF 15,59' },
+      { img:'public/proyectos-inmobiliarios/house2.jpg', n:'Villa El Roble', t:'Casa 4D/3B', m:120, precio:'UF 4.852,58', canon:'UF 141,53', pp:'$193.340.000', cp:'$5.638.000 / mes', g:'+UF 125,94 / $5.017.000', q:'UF 15,59' },
+      { img:'public/proyectos-inmobiliarios/house3.jpg', n:'Parque Residencial Norte', t:'Casa 3D/2B', m:90, precio:'UF 5.396,12', canon:'UF 125,91', pp:'$214.970.000', cp:'$5.016.000 / mes', g:'+UF 110,32 / $4.395.000', q:'UF 15,59' },
+    ]
+  },
+  {
+    detalle: { pendiente:'UF 803,69', otorgado:'UF 1.684,80', dividendo:'UF 10,62', tasa:'4.46%', fecha:'2013-08-16' },
+    val: { orig:'UF 2.200,00', orig_fecha:'2013-08-16', delta_uf:'+3.121,00 UF', delta_pct:'+137,59%', pos:true, actual:'UF 5.227,00', actual_fecha:'2026-03-06' },
+    liq: { disponible:'UF 3.377,91', rehip_plazo:'20 años · tasa 4.46% anual', rehip_cuota:'UF 21,30', rehip_pesos:'$848.527', con_cuota:'UF 97,37', con_pesos:'$3.879.459', ahorro_uf:'+UF 76,07', ahorro_pesos:'$3.030.931' },
+    zona: 'Comuna 346',
+    proy: [
+      { img:'public/proyectos-inmobiliarios/apartment1.jpg', n:'Edificio Parque Central', t:'Departamento 2D/2B', m:65, precio:'UF 2.739,65', canon:'UF 50,23', pp:'$109.110.000', cp:'$2.001.000 / mes', g:'+UF 28,93 / $1.152.000', q:'UF 21,30' },
+      { img:'public/proyectos-inmobiliarios/apartment2.jpg', n:'Condominio Los Aromos', t:'Departamento 1D/1B', m:42, precio:'UF 3.499,11', canon:'UF 52,49', pp:'$139.410.000', cp:'$2.091.000 / mes', g:'+UF 31,19 / $1.242.000', q:'UF 21,30' },
+      { img:'public/proyectos-inmobiliarios/house1.jpg', n:'Casa Jardín Sur', t:'Casa 3D/2B', m:95, precio:'UF 4.016,01', canon:'UF 100,40', pp:'$159.980.000', cp:'$4.000.000 / mes', g:'+UF 79,10 / $3.151.000', q:'UF 21,30' },
+      { img:'public/proyectos-inmobiliarios/house2.jpg', n:'Villa El Roble', t:'Casa 4D/3B', m:120, precio:'UF 4.269,71', canon:'UF 124,53', pp:'$170.080.000', cp:'$4.962.000 / mes', g:'+UF 103,23 / $4.113.000', q:'UF 21,30' },
+      { img:'public/proyectos-inmobiliarios/house3.jpg', n:'Parque Residencial Norte', t:'Casa 3D/2B', m:90, precio:'UF 4.540,09', canon:'UF 105,94', pp:'$180.884.924', cp:'$4.220.648 / mes', g:'+UF 84,64 / $3.372.121', q:'UF 21,30' },
+    ]
+  }
+]
+
+let cur = 0
+const openSet = new Set()
+
+function selectCredito(i) {
+  cur = i; openSet.clear()
+  document.querySelectorAll('.credito-card').forEach((c,j) => c.classList.toggle('selected', i===j))
+  document.querySelectorAll('.dot').forEach((d,j) => d.classList.toggle('active', i===j))
+  render()
+}
+
+function toggleProy(i) {
+  const body = document.getElementById('pb'+i)
+  const chev = document.getElementById('pc'+i)
+  const trig = document.getElementById('pt'+i)
+  if (openSet.has(i)) {
+    openSet.delete(i); body.style.display='none'; chev.classList.remove('open'); trig.classList.remove('open')
+  } else {
+    openSet.add(i); body.style.display='grid'; chev.classList.add('open'); trig.classList.add('open')
+  }
+}
+
+let tt
+function showToast(t) {
+  clearTimeout(tt)
+  document.querySelector('.toast')?.remove()
+  const el = document.createElement('div')
+  el.className = 'toast'
+  el.textContent = `✅ Solicitud de "${t}" enviada — tu ejecutivo te contactará pronto`
+  document.body.appendChild(el)
+  tt = setTimeout(() => el.remove(), 3500)
+}
+
+function render() {
+  const c = CREDITOS[cur]
+  const {detalle:d, val:v, liq:l, zona, proy} = c
+
+  const pHTML = proy.map((p,i) => `
+    <div class="proy-item">
+      <div class="proy-trigger" id="pt${i}" onclick="toggleProy(${i})">
+        <div class="proy-left">
+          <img class="proy-thumb" src="${p.img}" alt="${p.n}" onerror="this.style.opacity='0'">
+          <div>
+            <div class="proy-nombre">${p.n}</div>
+            <div class="proy-sub">${p.t} · ${p.m} m² · ${zona}</div>
+          </div>
+        </div>
+        <div class="proy-right">
+          <div>
+            <div class="proy-precio">${p.precio}</div>
+            <div class="proy-canon">Canon ${p.canon}/mes</div>
+          </div>
+          <div class="proy-chevron" id="pc${i}">▼</div>
+        </div>
+      </div>
+      <div class="proy-body" id="pb${i}" style="display:none">
+        <img class="proy-body-img" src="${p.img}" alt="${p.n}" onerror="this.style.display='none'">
+        <div class="proy-stat">
+          <div class="proy-stat-label">Precio estimado</div>
+          <div class="proy-stat-val">${p.precio}</div>
+          <div class="proy-stat-sub">${p.pp}</div>
+        </div>
+        <div class="proy-stat">
+          <div class="proy-stat-label">Canon arriendo</div>
+          <div class="proy-stat-val" style="color:var(--green)">${p.canon}</div>
+          <div class="proy-stat-sub">${p.cp}</div>
+        </div>
+        <div class="proy-stat">
+          <div class="proy-stat-label">Superficie</div>
+          <div class="proy-stat-val">${p.m} m²</div>
+          <div class="proy-stat-sub">${p.t}</div>
+        </div>
+        <div class="flujo">
+          <div class="flujo-titulo">Flujo de caja mensual estimado</div>
+          <div class="flujo-row"><span>+ Canon arriendo</span><span class="f-pos">${p.canon}</span></div>
+          <div class="flujo-row"><span>− Cuota rehipoteca</span><span class="f-neg">−${p.q}</span></div>
+          <div class="flujo-row"><span>= Ganancia neta</span><span class="f-pos">${p.g}</span></div>
+        </div>
+      </div>
+    </div>`).join('')
+
+  document.getElementById('content').innerHTML = `
+    <div class="sec-label">Detalle del crédito</div>
+    <div class="monto-pendiente">Monto pendiente <strong>${d.pendiente}</strong></div>
+    <div class="tabla">
+      <div class="tabla-row"><span class="tr-label">Monto otorgado</span><span class="tr-value">${d.otorgado}</span></div>
+      <div class="tabla-row"><span class="tr-label">Dividendo mensual</span><span class="tr-value">${d.dividendo}</span></div>
+      <div class="tabla-row"><span class="tr-label">Tasa</span><span class="tr-value">${d.tasa}</span></div>
+      <div class="tabla-row"><span class="tr-label">Fecha tasación original</span><span class="tr-value">${d.fecha}</span></div>
+    </div>
+
+    <div class="card-section">
+      <div class="section-head"><h3>¿Cuánto vale tu propiedad hoy?</h3><span class="powered">powered by Tinsa</span></div>
+      <div class="val-grid">
+        <div class="val-card">
+          <div class="val-label">Tasación original</div>
+          <div class="val-uf">${v.orig}</div>
+          <div class="val-fecha">${v.orig_fecha}</div>
+        </div>
+        <div class="val-delta">
+          <div class="delta-num ${v.pos?'pos':'neg'}">${v.delta_uf}</div>
+          <div class="delta-pct ${v.pos?'pos':'neg'}">${v.delta_pct}</div>
+        </div>
+        <div class="val-card">
+          <div class="val-label">Valor hoy</div>
+          <div class="val-uf">${v.actual}</div>
+          <div class="val-fecha">${v.actual_fecha}</div>
+        </div>
+      </div>
+      <div class="mensaje ${v.pos?'pos-bg':''}">
+        ${v.pos ? '✅ Tu propiedad ha ganado valor. Descubre cómo aprovechar tu plusvalía.' : '📊 El mercado ha tenido variaciones en tu sector.'}
+      </div>
+    </div>
+
+    <div class="card-section">
+      <div class="section-head"><h3>Simula tu liquidez</h3><span class="powered">tasa referencial febrero 2026</span></div>
+      <div class="sim-monto">
+        <span class="sim-monto-label">Monto disponible estimado (80% valor actual − saldo)</span>
+        <span class="sim-monto-val">${l.disponible}</span>
+      </div>
+      <div class="sim-grid">
+        <div class="sim-card dest">
+          <div class="sim-card-tipo">Rehipoteca</div>
+          <div class="sim-card-plazo">${l.rehip_plazo}</div>
+          <div class="sim-card-cuota-label">Cuota mensual estimada</div>
+          <div class="sim-card-cuota">${l.rehip_cuota}</div>
+          <div class="sim-card-pesos">${l.rehip_pesos}</div>
+          <div class="sim-card-nota">Aprovecha el valor de tu propiedad</div>
+        </div>
+        <div class="sim-card">
+          <div class="sim-card-tipo">Crédito de Consumo</div>
+          <div class="sim-card-plazo">5 años · tasa 24,1% anual</div>
+          <div class="sim-card-cuota-label">Cuota mensual estimada</div>
+          <div class="sim-card-cuota">${l.con_cuota}</div>
+          <div class="sim-card-pesos" style="color:var(--text-3)">${l.con_pesos}</div>
+          <div class="sim-card-nota">Tasa referencial feb 2026 · BCCh</div>
+        </div>
+      </div>
+      <div class="sim-ahorro">
+        <span class="sim-ahorro-label">💰 Ahorras mensualmente eligiendo rehipoteca</span>
+        <div>
+          <div class="sim-ahorro-val">${l.ahorro_uf}</div>
+          <div class="sim-ahorro-pesos">${l.ahorro_pesos}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-section">
+      <div class="proy-header">
+        <h3>🏘️ Invierte y arrienda</h3>
+        <p>Proyectos disponibles en ${zona} · simulación referencial</p>
+      </div>
+      ${pHTML}
+    </div>
+
+    <div class="card-section">
+      <div class="ctas-head">
+        <h3>¿Qué quieres hacer con tu propiedad?</h3>
+        <p>Habla con tu ejecutivo y te ayudamos a financiarlo</p>
+      </div>
+      <div class="ctas-grid">
+        <div class="cta-card" onclick="showToast('Remodela tu hogar')">
+          <div class="cta-icon">🔨</div>
+          <div class="cta-titulo">Remodela tu hogar</div>
+          <div class="cta-desc">Mejora los espacios de tu propiedad y aumenta su valor.</div>
+          <button class="cta-btn">Contactar ejecutivo →</button>
+        </div>
+        <div class="cta-card" onclick="showToast('Amplía tu propiedad')">
+          <div class="cta-icon">🏗️</div>
+          <div class="cta-titulo">Amplía tu propiedad</div>
+          <div class="cta-desc">Agrega metros cuadrados y maximiza el potencial de tu terreno.</div>
+          <button class="cta-btn">Contactar ejecutivo →</button>
+        </div>
+        <div class="cta-card" onclick="showToast('Eficiencia energética')">
+          <div class="cta-icon">⚡</div>
+          <div class="cta-titulo">Mejora la eficiencia energética</div>
+          <div class="cta-desc">Rebaja la tasa de tu crédito hipotecario.</div>
+          <button class="cta-btn">Contactar ejecutivo →</button>
+        </div>
+      </div>
+    </div>
+  `
+}
+</script>
+</body>
+</html>
